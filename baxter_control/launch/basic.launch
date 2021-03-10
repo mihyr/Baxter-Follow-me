@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<launch>
+  <!--Source rethink_ws, moveit_robots_ws and project_ws before using this launch file-->
+  
+  <!--args-->
+  <arg name="use_gazebo" default="false" doc="optionally launch baxter in Gazebo and Rviz"/>
+  <arg name="rviz_config" default="$(find arm_move)/rviz/arm.rviz" />
+  <arg name="right_electric_gripper" default="false" />
+  <arg name="left_electric_gripper" default="false" />
+  <arg name="headless" default="true" />
+  <arg name="gui" default="false" />
+
+
+  <!--include-->
+  <group if="$(arg use_gazebo)">
+    <include file="$(find baxter_moveit_config)/launch/baxter_grippers.launch">
+        <!-- all vars that included.launch requires must be set -->       
+        <arg name="rviz_config" value="$(arg rviz_config)" />
+        <arg name="left_electric_gripper" value="$(arg left_electric_gripper)" />
+        <arg name="right_electric_gripper" value="$(arg right_electric_gripper)" />
+
+    </include>
+    <include file="$(find baxter_gazebo)/launch/baxter_world.launch">
+        <!-- all vars that included.launch requires must be set -->
+        <arg name="headless" value="$(arg headless)" />
+        <arg name="gui" value="$(arg gui)" />
+        <arg name="left_electric_gripper" value="$(arg left_electric_gripper)" />
+        <arg name="right_electric_gripper" value="$(arg right_electric_gripper)" />
+
+    </include>
+  </group>
+
+  
+  <!--params-->
+  
+  <!--nodes-->
+    <!--private params-->
+
+</launch>
