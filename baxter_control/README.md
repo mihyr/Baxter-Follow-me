@@ -1,3 +1,3 @@
 ```
-roslaunch baxter_control basic.launch use_gazebo:=true 
+roslaunch baxter_control basic.launch use_simulation:=true 
 ```

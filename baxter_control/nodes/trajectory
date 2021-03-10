@@ -1,0 +1,74 @@
+#!/usr/bin/env python
+"""
+
+**Info**: This *trajectory* node 
+
+**Services**:
+
+
+
+**Parameters**:
+
+    
+**Note**: -
+
+"""
+import rospy
+import sys
+import moveit_commander
+from geometry_msgs.msg import Quaternion, Vector3, PoseStamped, Pose
+from moveit_msgs.msg import MoveItErrorCodes
+
+#Import params from waypoints.yaml
+
+freq = rospy.get_param("/Fr") #Define frequency rate
+#freq = 60
+
+def main():
+        
+    #initialize moveit_commander
+    moveit_commander.roscpp_initialize(sys.argv)
+
+    #initialize node
+    rospy.init_node('trajectory')
+
+    #instantiate a RobotCommander object
+    robot = moveit_commander.RobotCommander()
+
+    #instantiate a PlanningSceneInterface object
+    scene = moveit_commander.PlanningSceneInterface()
+
+    #logerr msg to check if node is running
+    rospy.logerr("This is just a check for mover node, ignore me")
+
+    #set group names 
+    left_arm = "left_arm"
+    left_hand = "left_hand"
+    right_arm = "right_arm"
+    right_hand = "right_hand"
+    both_arms = "both_arms"
+
+    #init MoveIt for groups
+    left_arm_moveit = moveit_commander.MoveGroupCommander(left_arm)
+    left_hand_moveit = moveit_commander.MoveGroupCommander(left_hand)
+    right_arm_moveit = moveit_commander.MoveGroupCommander(right_arm)
+    right_hand_moveit = moveit_commander.MoveGroupCommander(right_hand)
+    both_arms_moveit = moveit_commander.MoveGroupCommander(both_arms)
+
+    #define ros frequency
+    hz = rospy.Rate(freq)
+
+    #iteration loop
+    while not rospy.is_shutdown():
+
+        #check
+        #rospy.loginfo("check")
+        
+        #go to sleep!
+        hz.sleep()
+
+if __name__ == "__main__":
+    try:
+        main()
+    except rospy.ROSInterruptException:
+        pass 

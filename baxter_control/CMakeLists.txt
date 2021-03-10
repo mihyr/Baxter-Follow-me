@@ -7,8 +7,12 @@ project(baxter_control)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin COMPONENTS
+find_package(catkin REQUIRED COMPONENTS
+    geometry_msgs
+    moveit_commander
+    moveit_msgs
     rospy
+    std_msgs
 )
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -102,7 +106,7 @@ find_package(catkin COMPONENTS
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES baxter_control
-  CATKIN_DEPENDS rospy
+  CATKIN_DEPENDS geometry_msgs moveit_commander moveit_msgs rospy std_msgs
 #  DEPENDS system_lib
 )
 
@@ -156,10 +160,10 @@ include_directories(
 
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
-# catkin_install_python(PROGRAMS
-#   scripts/my_python_script
-#   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
+catkin_install_python(PROGRAMS
+  nodes/trajectory
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
 ## Mark executables for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_executables.html
