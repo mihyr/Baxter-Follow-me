@@ -58,12 +58,26 @@ def main():
     #define ros frequency
     hz = rospy.Rate(freq)
 
+     #reset both arms
+    left_arm_moveit.set_named_target('left_neutral')
+    left_arm_moveit.go()
+    left_arm_moveit.stop()
+    left_arm_moveit.clear_pose_targets()
+    right_arm_moveit.set_named_target('right_neutral')
+    right_arm_moveit.go()
+    right_arm_moveit.stop()
+    right_arm_moveit.clear_pose_targets()
+
+    
     #iteration loop
     while not rospy.is_shutdown():
 
         #check
         #rospy.loginfo("check")
         
+
+       
+
         #go to sleep!
         hz.sleep()
 
