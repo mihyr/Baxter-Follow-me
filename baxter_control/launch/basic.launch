@@ -13,13 +13,7 @@
 
   <!--include-->
   <group if="$(arg use_simulation)">
-    <include file="$(find baxter_moveit_config)/launch/baxter_grippers.launch">
-        <!-- all vars that included.launch requires must be set-->        
-        <arg name="rviz_config" value="$(arg rviz_config)" />
-        <arg name="left_electric_gripper" value="$(arg left_electric_gripper)" />
-        <arg name="right_electric_gripper" value="$(arg right_electric_gripper)" />
 
-    </include>
     <include file="$(find baxter_gazebo)/launch/baxter_world.launch">
         <!-- all vars that included.launch requires must be set -->
         <arg name="headless" value="$(arg headless)" />
@@ -28,14 +22,23 @@
         <arg name="right_electric_gripper" value="$(arg right_electric_gripper)" />
 
     </include>
+    
   </group>
 
+  <include file="$(find baxter_moveit_config)/launch/baxter_grippers.launch">
+      <!-- all vars that included.launch requires must be set        
+      <arg name="rviz_config" value="$(arg rviz_config)" />
+      <arg name="left_electric_gripper" value="$(arg left_electric_gripper)" />
+      <arg name="right_electric_gripper" value="$(arg right_electric_gripper)" />-->
+
+  </include>
   
   <!--params-->
   <rosparam command="load" file="$(find baxter_control)/config/global_params.yaml" />
 
   <!--nodes-->
-  <node name="trajectory" pkg="baxter_control" type="trajectory" output="screen">
-    <!--private params-->
-  </node>
+  <node name="joint_trajectory_action_server" pkg="baxter_interface" type="joint_trajectory_action_server.py" />
+    <!--<node name="trajectory" pkg="baxter_control" type="trajectory" output="screen">
+      private params
+    </node>-->
 </launch>
