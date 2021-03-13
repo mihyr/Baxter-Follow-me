@@ -24,12 +24,25 @@ from moveit_msgs.msg import MoveItErrorCodes
 #freq = rospy.get_param("/Fr") #Define frequency rate
 freq = 200
 
+#Define home_callback service
+def home_callback(msg):
+    #reset both arms
+    left_arm_moveit.set_named_target('left_neutral')
+    right_arm_moveit.set_named_target('right_neutral')
+    left_arm_moveit.go()
+    right_arm_moveit.go()
+    left_arm_moveit.stop()
+    right_arm_moveit.stop()
+    left_arm_moveit.clear_pose_targets()
+    right_arm_moveit.clear_pose_targets()
+    return {'response': "Home Position Set"}
+
+
 def main():
         
     #initialize moveit_commander
     joint_state_topic = ['joint_states:=/robot/joint_states']
     moveit_commander.roscpp_initialize(joint_state_topic)
-    #moveit_commander.roscpp_initialize(sys.argv)
 
     #initialize node
     rospy.init_node('trajectory')
@@ -55,47 +68,44 @@ def main():
     left_hand_moveit = moveit_commander.MoveGroupCommander(left_hand)
     right_arm_moveit = moveit_commander.MoveGroupCommander(right_arm)
     right_hand_moveit = moveit_commander.MoveGroupCommander(right_hand)
-    both_arms_moveit = moveit_commander.MoveGroupCommander("both_arms")
+    both_arms_moveit = moveit_commander.MoveGroupCommander(both_arms)
 
     #define ros frequency
     hz = rospy.Rate(freq)
 
-     #reset both arms
-    #left_arm_moveit.set_named_target('left_neutral')
-    #right_arm_moveit.set_named_target('right_neutral')
-    #left_arm_moveit.go()
-    #right_arm_moveit.go()
-    #left_arm_moveit.stop()
-    #right_arm_moveit.stop()
-    #left_arm_moveit.clear_pose_targets()
-    #right_arm_moveit.clear_pose_targets()
-
     #get current pose of robot
-    
-    #print current pose of px100 arm
-    #rospy.loginfo(current_pose)
-
-    # Planning to a Pose goal
-    #left_current_pose = both_arms_moveit.get_current_pose().pose
-    #right_current_pose = both_arms_moveit.get_current_joint_values()
-    left_current_pose = both_arms_moveit.get_current_pose(end_effector_link='left_gripper').pose
+    left_current_pose = left_arm_moveit.get_current_pose(end_effector_link='left_gripper').pose
+    right_current_pose = right_arm_moveit.get_current_pose(end_effector_link='right_gripper').pose
     print(left_current_pose)
+    print(right_current_pose)
+
+    # Planning to a Pose goal (relative)
+    left_target_pose = left_current_pose
+    left_target_pose.position.x = left_current_pose.position.x - 0.1 # 0.1m = 10 cm
+    left_target_pose.position.z = left_current_pose.position.z - 0.1
+    left_arm_moveit.set_pose_target(left_target_pose, end_effector_link='left_gripper')
+    plan = left_arm_moveit.plan()
+    left_arm_moveit.go()
+    left_arm_moveit.stop()
+    left_arm_moveit.clear_pose_targets()   
+
+    '''
     #instantiate pose message
-    #pose_goal = Pose()
+    pose_goal = Pose()
     #Get Position and quaternion orientation for arm from step service
-    #pose_goal.position = Vector3(0.6,0.8,0.05)
-    #pose_goal.orientation = Quaternion(-0.3,0.5,0.2,1)
-    #left_arm_moveit.set_pose_target(pose_goal)
+    pose_goal.position = Vector3(0.4,0.5,-0.4)
+    pose_goal.orientation = Quaternion(0.3,-0.8,0.02,0.05)
+    left_arm_moveit.set_pose_target(pose_goal, end_effector_link='left_gripper')
 
     #plan and execute
-    #(success_status, trajectory_message, planning_time, error) = left_arm_moveit.plan()
-    #left_arm_moveit.execute(trajectory_message, wait=True)
-    #left_arm_moveit.go()
+    (success_status, trajectory_message, planning_time, error) = left_arm_moveit.plan()
+    left_arm_moveit.execute(trajectory_message, wait=True)
+    left_arm_moveit.go()
 
     #stop and clear the target
-    #left_arm_moveit.stop()
-    #left_arm_moveit.clear_pose_targets()
-
+    left_arm_moveit.stop()
+    left_arm_moveit.clear_pose_targets()
+    '''
     #iteration loop
     while not rospy.is_shutdown():
 
