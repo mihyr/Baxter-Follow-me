@@ -5,8 +5,8 @@
   <!--args-->
   <arg name="use_simulation" default="false" doc="optionally launch baxter in Gazebo and Rviz"/>
   <arg name="rviz_config" default="$(find baxter_control)/rviz/baxter_control.rviz" />
-  <arg name="right_electric_gripper" default="false" />
-  <arg name="left_electric_gripper" default="false" />
+  <arg name="right_electric_gripper" default="true" />
+  <arg name="left_electric_gripper" default="true" />
   <arg name="headless" default="true" />
   <arg name="gui" default="false" />
   <arg name="run_trajectory_node" default="false" />

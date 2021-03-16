@@ -38,6 +38,9 @@
   ```
   roslaunch baxter_control basic.launch run_trajectory_node:=true 
   ```
+  ```
+  roslaunch baxter_control basic.launch use_joint_joystick:=true left_electric_gripper:=true
+  ```
   *joint_trajectory_action_server.py` is included in the launch file*
 
 - Disable the robot
@@ -98,4 +101,4 @@ orientation:
 
 ## RQT Graph
 
-[![rqt](rosgraph.svg)]
+![rqt](rosgraph.svg)

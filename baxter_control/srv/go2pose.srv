@@ -1,5 +1,7 @@
 geometry_msgs/Vector3 goal_position
 geometry_msgs/Quaternion goal_orientation
+string arm
 ---
 string response
+geometry_msgs/Pose new_pose
 moveit_msgs/MoveItErrorCodes error

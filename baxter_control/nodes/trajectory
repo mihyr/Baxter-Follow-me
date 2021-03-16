@@ -18,7 +18,7 @@ import sys
 import moveit_commander
 from geometry_msgs.msg import Quaternion, Vector3, PoseStamped, Pose
 from moveit_msgs.msg import MoveItErrorCodes
-from baxter_control.srv import home, go2pose
+from baxter_control.srv import home, go2pose, followme
 import baxter_interface
 from baxter_interface import Gripper
 #Import params from waypoints.yaml
@@ -48,7 +48,7 @@ def main():
 
     #logerr msg to check if node is running
     rospy.logerr("This is just a check for mover node, ignore me")
-
+    
     #set group names 
     left_arm = "left_arm"
     left_hand = "left_hand"
@@ -62,7 +62,7 @@ def main():
     right_arm_moveit = moveit_commander.MoveGroupCommander(right_arm)
     right_hand_moveit = moveit_commander.MoveGroupCommander(right_hand)
     both_arms_moveit = moveit_commander.MoveGroupCommander(both_arms)
-
+    print(left_hand_moveit.get_current_pose(end_effector_link='left_gripper'))
     #define ros frequency
     hz = rospy.Rate(freq)
 
@@ -73,13 +73,14 @@ def main():
     print(right_current_pose)
     
     #Set moveit params
-    left_arm_moveit.set_goal_position_tolerance(0.001)
+    left_arm_moveit.set_goal_position_tolerance(0.005)
     left_arm_moveit.set_goal_orientation_tolerance(0.01)
-    left_arm_moveit.set_planning_time(10.0)
+    left_arm_moveit.set_planning_time(5.0)
+    #left_arm_moveit.set_num_planning_attempts(10)
     left_arm_moveit.allow_replanning(True)
-    left_arm_moveit.set_max_velocity_scaling_factor(0.5)
-    left_arm_moveit.set_max_acceleration_scaling_factor(0.5)
-    
+    left_arm_moveit.set_max_velocity_scaling_factor(0.3)
+    left_arm_moveit.set_max_acceleration_scaling_factor(0.2)
+
     #Define home_callback service
     def home_callback(msg):
         #reset both arms
@@ -95,40 +96,76 @@ def main():
 
     #Define go2pose_callback service
     def go2pose_callback(msg):
-        #get current pose of robot
-        left_current_pose = left_arm_moveit.get_current_pose(end_effector_link='left_gripper').pose
-        right_current_pose = right_arm_moveit.get_current_pose(end_effector_link='right_gripper').pose
+        if msg.arm == "left":
+            #get current pose of robot
+            left_current_pose = left_arm_moveit.get_current_pose(end_effector_link='left_gripper').pose
+                
+            # Planning to a Pose goal (relative)
+            left_target_pose = left_current_pose
+            left_target_pose.position.x += msg.goal_position.x
+            left_target_pose.position.y += msg.goal_position.y
+            left_target_pose.position.z += msg.goal_position.z
+            left_target_pose.orientation.x += msg.goal_orientation.x
+            left_target_pose.orientation.y += msg.goal_orientation.y
+            left_target_pose.orientation.z += msg.goal_orientation.z
+            left_target_pose.orientation.w += msg.goal_orientation.w 
+            
+            left_arm_moveit.set_pose_target(left_target_pose)
+            #plan and execute
+            #(success_status, trajectory_message, planning_time, error) = left_arm_moveit.plan()
+            #left_arm_moveit.execute(trajectory_message, wait=True)
+            left_arm_moveit.go()
+            left_arm_moveit.stop()
+            left_arm_moveit.clear_pose_targets()
+            left_new_pose = left_arm_moveit.get_current_pose(end_effector_link='left_gripper').pose
 
-        # Planning to a Pose goal (relative)
-        left_target_pose = left_current_pose
-        left_target_pose.position.x = left_current_pose.position.x + msg.goal_position.x
-        left_target_pose.position.y = left_current_pose.position.y + msg.goal_position.y
-        left_target_pose.position.z = left_current_pose.position.z + msg.goal_position.z
-        left_target_pose.orientation.x = left_current_pose.orientation.x + msg.goal_orientation.x
-        left_target_pose.orientation.y = left_current_pose.orientation.y + msg.goal_orientation.y
-        left_target_pose.orientation.z = left_current_pose.orientation.z + msg.goal_orientation.z
-        left_target_pose.orientation.w = left_current_pose.orientation.w + msg.goal_orientation.w
+            return {'response': "Done", 'new_pose': left_new_pose}
 
-        #pose_goal.orientation = msg.goal_orientation
-        left_arm_moveit.set_pose_target(left_target_pose)
+        elif msg.arm == "right":
+            #get current pose of robot
+            right_current_pose = right_arm_moveit.get_current_pose(end_effector_link='right_gripper').pose
+                
+            # Planning to a Pose goal (relative)
+            right_target_pose = right_current_pose
+            right_target_pose.position.x += msg.goal_position.x
+            right_target_pose.position.y += msg.goal_position.y
+            right_target_pose.position.z += msg.goal_position.z
+            right_target_pose.orientation.x += msg.goal_orientation.x
+            right_target_pose.orientation.y += msg.goal_orientation.y
+            right_target_pose.orientation.z += msg.goal_orientation.z
+            right_target_pose.orientation.w += msg.goal_orientation.w 
+            
+            right_arm_moveit.set_pose_target(right_target_pose)
+            #plan and execute
+            #(success_status, trajectory_message, planning_time, error) = right_arm_moveit.plan()
+            #right_arm_moveit.execute(trajectory_message, wait=True)
+            right_arm_moveit.go()
+            right_arm_moveit.stop()
+            right_arm_moveit.clear_pose_targets()
+            right_new_pose = right_arm_moveit.get_current_pose(end_effector_link='right_gripper').pose
 
-        #plan and execute
-        (success_status, trajectory_message, planning_time, error) = left_arm_moveit.plan()
-        left_arm_moveit.execute(trajectory_message, wait=True)
-        left_arm_moveit.go()
+            return {'response': "Done", 'new_pose': right_new_pose}
 
-        #stop and clear the target
-        left_arm_moveit.stop()
-        left_arm_moveit.clear_pose_targets()
-
-        if success_status == 1:
-            return {'response': "Planning success!", 'error':error}
         else:
-            return {'response': "Planning failed!", 'error':error}
-     
+            return {'response': "Arm set incorrectly. Set *arm* field to 'left' or 'right'!"}
+
+    #Define home_callback service
+    def followme_callback(msg):
+        #reset both arms
+        left_arm_moveit.set_named_target('left_neutral')
+        right_arm_moveit.set_named_target('right_neutral')
+        left_arm_moveit.go()
+        right_arm_moveit.go()
+        left_arm_moveit.stop()
+        right_arm_moveit.stop()
+        left_arm_moveit.clear_pose_targets()
+        right_arm_moveit.clear_pose_targets()
+        return {'response': "Home Position Set"}
+
     #init home, reset, step and follow services
     home_srv = rospy.Service("home", home, home_callback)
     go2pose_srv = rospy.Service("go2pose", go2pose, go2pose_callback)
+    followme_srv = rospy.Service("followme", go2pose, followme_callback)
 
     #iteration loop
     while not rospy.is_shutdown():
