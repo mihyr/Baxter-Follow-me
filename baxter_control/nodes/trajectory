@@ -35,7 +35,7 @@ def main():
     #initialize moveit_commander
     joint_state_topic = ['joint_states:=/robot/joint_states']
     moveit_commander.roscpp_initialize(joint_state_topic)
-    moveit_commander.roscpp_initialize(sys.argv)
+    #moveit_commander.roscpp_initialize(sys.argv)
 
     #initialize node
     rospy.init_node('trajectory')
@@ -71,20 +71,15 @@ def main():
     right_current_pose = right_arm_moveit.get_current_pose(end_effector_link='right_gripper').pose
     print(left_current_pose)
     print(right_current_pose)
-
-    # Planning to a Pose goal (relative)
-    left_target_pose = left_current_pose
-    left_target_pose.position.x = left_current_pose.position.x - 0.1 # 0.1m = 10 cm
-    left_target_pose.position.z = left_current_pose.position.z - 0.1
-    left_arm_moveit.set_pose_target(left_target_pose, end_effector_link='left_gripper')
-    plan = left_arm_moveit.plan()
-    left_arm_moveit.go()
-    left_arm_moveit.stop()
-    left_arm_moveit.clear_pose_targets()   
-
-    '''
     
-    '''
+    #Set moveit params
+    left_arm_moveit.set_goal_position_tolerance(0.001)
+    left_arm_moveit.set_goal_orientation_tolerance(0.01)
+    left_arm_moveit.set_planning_time(10.0)
+    left_arm_moveit.allow_replanning(True)
+    left_arm_moveit.set_max_velocity_scaling_factor(0.5)
+    left_arm_moveit.set_max_acceleration_scaling_factor(0.5)
+    
     #Define home_callback service
     def home_callback(msg):
         #reset both arms
@@ -100,12 +95,22 @@ def main():
 
     #Define go2pose_callback service
     def go2pose_callback(msg):
-        #instantiate pose message
-        pose_goal = Pose()
-        #Get Position and quaternion orientation for arm from step service
-        pose_goal.position = msg.goal_position
-        pose_goal.orientation = msg.goal_orientation
-        left_arm_moveit.set_pose_target(pose_goal, end_effector_link='left_gripper')
+        #get current pose of robot
+        left_current_pose = left_arm_moveit.get_current_pose(end_effector_link='left_gripper').pose
+        right_current_pose = right_arm_moveit.get_current_pose(end_effector_link='right_gripper').pose
+
+        # Planning to a Pose goal (relative)
+        left_target_pose = left_current_pose
+        left_target_pose.position.x = left_current_pose.position.x + msg.goal_position.x
+        left_target_pose.position.y = left_current_pose.position.y + msg.goal_position.y
+        left_target_pose.position.z = left_current_pose.position.z + msg.goal_position.z
+        left_target_pose.orientation.x = left_current_pose.orientation.x + msg.goal_orientation.x
+        left_target_pose.orientation.y = left_current_pose.orientation.y + msg.goal_orientation.y
+        left_target_pose.orientation.z = left_current_pose.orientation.z + msg.goal_orientation.z
+        left_target_pose.orientation.w = left_current_pose.orientation.w + msg.goal_orientation.w
+
+        #pose_goal.orientation = msg.goal_orientation
+        left_arm_moveit.set_pose_target(left_target_pose)
 
         #plan and execute
         (success_status, trajectory_message, planning_time, error) = left_arm_moveit.plan()
@@ -115,7 +120,11 @@ def main():
         #stop and clear the target
         left_arm_moveit.stop()
         left_arm_moveit.clear_pose_targets()
-        return {'response': "Home Position Set"}
+
+        if success_status == 1:
+            return {'response': "Planning success!", 'error':error}
+        else:
+            return {'response': "Planning failed!", 'error':error}
      
     #init home, reset, step and follow services
     home_srv = rospy.Service("home", home, home_callback)
