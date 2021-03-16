@@ -18,7 +18,7 @@ import sys
 import moveit_commander
 from geometry_msgs.msg import Quaternion, Vector3, PoseStamped, Pose
 from moveit_msgs.msg import MoveItErrorCodes
-from baxter_control.srv import home
+from baxter_control.srv import home, go2pose
 import baxter_interface
 from baxter_interface import Gripper
 #Import params from waypoints.yaml
@@ -83,21 +83,7 @@ def main():
     left_arm_moveit.clear_pose_targets()   
 
     '''
-    #instantiate pose message
-    pose_goal = Pose()
-    #Get Position and quaternion orientation for arm from step service
-    pose_goal.position = Vector3(0.4,0.5,-0.4)
-    pose_goal.orientation = Quaternion(0.3,-0.8,0.02,0.05)
-    left_arm_moveit.set_pose_target(pose_goal, end_effector_link='left_gripper')
-
-    #plan and execute
-    (success_status, trajectory_message, planning_time, error) = left_arm_moveit.plan()
-    left_arm_moveit.execute(trajectory_message, wait=True)
-    left_arm_moveit.go()
-
-    #stop and clear the target
-    left_arm_moveit.stop()
-    left_arm_moveit.clear_pose_targets()
+    
     '''
     #Define home_callback service
     def home_callback(msg):
@@ -112,8 +98,28 @@ def main():
         right_arm_moveit.clear_pose_targets()
         return {'response': "Home Position Set"}
 
+    #Define go2pose_callback service
+    def go2pose_callback(msg):
+        #instantiate pose message
+        pose_goal = Pose()
+        #Get Position and quaternion orientation for arm from step service
+        pose_goal.position = msg.goal_position
+        pose_goal.orientation = msg.goal_orientation
+        left_arm_moveit.set_pose_target(pose_goal, end_effector_link='left_gripper')
+
+        #plan and execute
+        (success_status, trajectory_message, planning_time, error) = left_arm_moveit.plan()
+        left_arm_moveit.execute(trajectory_message, wait=True)
+        left_arm_moveit.go()
+
+        #stop and clear the target
+        left_arm_moveit.stop()
+        left_arm_moveit.clear_pose_targets()
+        return {'response': "Home Position Set"}
+     
     #init home, reset, step and follow services
     home_srv = rospy.Service("home", home, home_callback)
+    go2pose_srv = rospy.Service("go2pose", go2pose, go2pose_callback)
 
     #iteration loop
     while not rospy.is_shutdown():
