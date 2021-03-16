@@ -10,9 +10,33 @@
   <arg name="headless" default="true" />
   <arg name="gui" default="false" />
   <arg name="run_trajectory_node" default="false" />
-
+  <arg name="fake_execution" default="false"/>
+  <arg name="use_gripper_joystick" default="false"/>
+   <arg name="use_joint_joystick" default="false"/>
+  <arg name="joystick" default="xbox"/>
+  <arg name="dev" default="/dev/input/js0"/>
 
   <!--include-->
+  <group if="$(arg use_gripper_joystick)">
+
+    <include file="$(find baxter_examples)/launch/gripper_joystick.launch">
+        <!-- all vars that included.launch requires must be set -->
+        <arg name="joystick" value="$(arg joystick)" />
+        <arg name="dev" default="$(arg dev)"/>
+    </include>
+
+  </group>
+  
+  <group if="$(arg use_joint_joystick)">
+
+    <include file="$(find baxter_examples)/launch/joint_position_joystick.launch">
+        <!-- all vars that included.launch requires must be set -->
+        <arg name="joystick" value="$(arg joystick)"/>
+        <arg name="dev" default="$(arg dev)"/>
+    </include>
+
+  </group>
+
   <group if="$(arg use_simulation)">
 
     <include file="$(find baxter_gazebo)/launch/baxter_world.launch">
@@ -22,28 +46,31 @@
         <!--<arg name="left_electric_gripper" value="$(arg left_electric_gripper)" />
         <arg name="right_electric_gripper" value="$(arg right_electric_gripper)" />-->
         <remap from="joint_states" to="robot/joint_states"/>
-
     </include>
     
   </group>
 
   <include file="$(find baxter_moveit_config)/launch/baxter_grippers.launch">
-      <!-- all vars that included.launch requires must be set        
+      <!-- all vars that included.launch requires must be set
       <arg name="rviz_config" value="$(arg rviz_config)" />
       <arg name="left_electric_gripper" value="$(arg left_electric_gripper)" />
       <arg name="right_electric_gripper" value="$(arg right_electric_gripper)" />-->
-
+      
   </include>
   
   <!--global_params-->
   <rosparam command="load" file="$(find baxter_control)/config/global_params.yaml" />
 
   <!--nodes-->
-  <node name="joint_trajectory_action_server" pkg="baxter_interface" type="joint_trajectory_action_server.py" />
   
+  <node name="joint_trajectory_action_server" pkg="baxter_interface" type="joint_trajectory_action_server.py" />
+    
+  <!--<node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
+  </node>-->
   <group if="$(arg run_trajectory_node)">
     
     <node name="trajectory" pkg="baxter_control" type="trajectory" output="screen">
+    
       <!--private params-->
     </node>
   </group>

@@ -18,24 +18,16 @@ import sys
 import moveit_commander
 from geometry_msgs.msg import Quaternion, Vector3, PoseStamped, Pose
 from moveit_msgs.msg import MoveItErrorCodes
-
+from baxter_control.srv import home
+import baxter_interface
+from baxter_interface import Gripper
 #Import params from waypoints.yaml
 
 #freq = rospy.get_param("/Fr") #Define frequency rate
 freq = 200
 
-#Define home_callback service
-def home_callback(msg):
-    #reset both arms
-    left_arm_moveit.set_named_target('left_neutral')
-    right_arm_moveit.set_named_target('right_neutral')
-    left_arm_moveit.go()
-    right_arm_moveit.go()
-    left_arm_moveit.stop()
-    right_arm_moveit.stop()
-    left_arm_moveit.clear_pose_targets()
-    right_arm_moveit.clear_pose_targets()
-    return {'response': "Home Position Set"}
+
+
 
 
 def main():
@@ -43,6 +35,7 @@ def main():
     #initialize moveit_commander
     joint_state_topic = ['joint_states:=/robot/joint_states']
     moveit_commander.roscpp_initialize(joint_state_topic)
+    moveit_commander.roscpp_initialize(sys.argv)
 
     #initialize node
     rospy.init_node('trajectory')
@@ -106,6 +99,22 @@ def main():
     left_arm_moveit.stop()
     left_arm_moveit.clear_pose_targets()
     '''
+    #Define home_callback service
+    def home_callback(msg):
+        #reset both arms
+        left_arm_moveit.set_named_target('left_neutral')
+        right_arm_moveit.set_named_target('right_neutral')
+        left_arm_moveit.go()
+        right_arm_moveit.go()
+        left_arm_moveit.stop()
+        right_arm_moveit.stop()
+        left_arm_moveit.clear_pose_targets()
+        right_arm_moveit.clear_pose_targets()
+        return {'response': "Home Position Set"}
+
+    #init home, reset, step and follow services
+    home_srv = rospy.Service("home", home, home_callback)
+
     #iteration loop
     while not rospy.is_shutdown():
 
