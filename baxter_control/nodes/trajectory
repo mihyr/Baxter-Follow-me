@@ -79,6 +79,14 @@ def main():
     left_arm_moveit.set_max_velocity_scaling_factor(0.3)
     left_arm_moveit.set_max_acceleration_scaling_factor(0.2)
 
+    right_arm_moveit.set_goal_position_tolerance(0.005)
+    right_arm_moveit.set_goal_orientation_tolerance(0.01)
+    right_arm_moveit.set_planning_time(5.0)
+    #right_arm_moveit.set_num_planning_attempts(10)
+    right_arm_moveit.allow_replanning(True)
+    right_arm_moveit.set_max_velocity_scaling_factor(0.3)
+    right_arm_moveit.set_max_acceleration_scaling_factor(0.2)
+
     left_gripper = Gripper('left', CHECK_VERSION)
     right_gripper = Gripper('right', CHECK_VERSION)
 
@@ -154,15 +162,10 @@ def main():
 
     #Define followme_callback service
     def followme_callback(msg):
-        #reset both arms
-        left_arm_moveit.set_named_target('left_neutral')
-        right_arm_moveit.set_named_target('right_neutral')
-        left_arm_moveit.go()
-        right_arm_moveit.go()
-        left_arm_moveit.stop()
-        right_arm_moveit.stop()
-        left_arm_moveit.clear_pose_targets()
-        right_arm_moveit.clear_pose_targets()
+        #get params
+        x_waypoints = rospy.get_param("/x_waypoints")
+        y_waypoints = rospy.get_param("/y_waypoints")
+        z_waypoints = rospy.get_param("/z_waypoints")
         return {'response': "Home Position Set"}
 
     #Define start_callback service
@@ -210,8 +213,6 @@ def main():
     go2pose_srv = rospy.Service("go2pose", go2pose, go2pose_callback)
     followme_srv = rospy.Service("followme", go2pose, followme_callback)
     grip_srv = rospy.Service("grip", grip, grip_callback)
-
-  
 
     #iteration loop
     while not rospy.is_shutdown():
