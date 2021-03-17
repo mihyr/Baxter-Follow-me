@@ -166,7 +166,22 @@ def main():
         x_waypoints = rospy.get_param("/x_waypoints")
         y_waypoints = rospy.get_param("/y_waypoints")
         z_waypoints = rospy.get_param("/z_waypoints")
-        return {'response': "Home Position Set"}
+
+        waypoints = []
+
+        for i in range(len(x_waypoints)):
+            pose = Pose()
+            pose.position = Vector3(x_waypoints[i], y_waypoints[i], z_waypoints[i])
+            pose.orientation = Quaternion(0,0,0,1)
+            waypoints.append(pose)
+        
+        (plan, fraction) = right_arm_moveit.compute_cartesian_path(waypoints, 0.01, 0.0)           
+
+        right_arm_moveit.execute(plan, wait=True)
+        #right_arm_moveit.go()
+        right_arm_moveit.stop()
+        right_arm_moveit.clear_pose_targets()
+        return {'response': "Done"}
 
     #Define start_callback service
     def start_callback(msg):
