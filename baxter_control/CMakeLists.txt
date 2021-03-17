@@ -59,9 +59,11 @@ find_package(catkin REQUIRED COMPONENTS
 add_service_files(
   FILES
   home.srv
-  go2pose.srv
+  left_go2pose.srv
+  right_go2pose.srv
   followme.srv
-  grip.srv
+  left_grip.srv
+  right_grip.srv
 #   Service2.srv
 )
 
