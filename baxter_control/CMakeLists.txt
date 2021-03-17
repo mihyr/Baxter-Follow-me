@@ -61,6 +61,7 @@ add_service_files(
   home.srv
   go2pose.srv
   followme.srv
+  grip.srv
 #   Service2.srv
 )
 

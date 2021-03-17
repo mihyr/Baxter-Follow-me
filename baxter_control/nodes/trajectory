@@ -18,17 +18,15 @@ import sys
 import moveit_commander
 from geometry_msgs.msg import Quaternion, Vector3, PoseStamped, Pose
 from moveit_msgs.msg import MoveItErrorCodes
-from baxter_control.srv import home, go2pose, followme
+from baxter_control.srv import home, go2pose, followme, grip
 import baxter_interface
-from baxter_interface import Gripper
-#Import params from waypoints.yaml
+from baxter_interface import Gripper, CHECK_VERSION
+from std_srvs.srv import Empty, EmptyResponse
 
+
+#Import params from waypoints.yaml
 #freq = rospy.get_param("/Fr") #Define frequency rate
 freq = 200
-
-
-
-
 
 def main():
         
@@ -80,6 +78,9 @@ def main():
     left_arm_moveit.allow_replanning(True)
     left_arm_moveit.set_max_velocity_scaling_factor(0.3)
     left_arm_moveit.set_max_acceleration_scaling_factor(0.2)
+
+    left_gripper = Gripper('left', CHECK_VERSION)
+    right_gripper = Gripper('right', CHECK_VERSION)
 
     #Define home_callback service
     def home_callback(msg):
@@ -149,7 +150,9 @@ def main():
         else:
             return {'response': "Arm set incorrectly. Set *arm* field to 'left' or 'right'!"}
 
-    #Define home_callback service
+
+
+    #Define followme_callback service
     def followme_callback(msg):
         #reset both arms
         left_arm_moveit.set_named_target('left_neutral')
@@ -162,10 +165,53 @@ def main():
         right_arm_moveit.clear_pose_targets()
         return {'response': "Home Position Set"}
 
+    #Define start_callback service
+    def start_callback(msg):
+        #Start execution
+
+        # Reboot Gripper
+        right_gripper.reboot()
+        # Calibrate Gripper
+        right_gripper.calibrate()
+        # Open Gripper
+        right_gripper.open()
+
+        # Reboot Gripper
+        left_gripper.reboot()
+        # Calibrate Gripper
+        left_gripper.calibrate()
+        # Open Gripper
+        left_gripper.open()
+        
+        return EmptyResponse()
+
+    #Define grip_callback service
+    def grip_callback(msg):
+        if msg.gripper == "left":
+            if(msg.state == 1):
+                left_gripper.open()
+                return {'response': "left Gripper Opened"}
+            elif(msg.state == 0):
+                left_gripper.close()
+                return {'response': "left Gripper Closed"}
+        elif msg.gripper == "right":
+            if(msg.state == 1):
+                right_gripper.open()
+                return {'response': "Right Gripper Opened"}
+            elif(msg.state == 0):
+                right_gripper.close()
+                return {'response': "Right Gripper Closed"}
+        else:
+            return {'response': "gripper set incorrectly. Set *gripper* field to 'left' or 'right'!"}
+        
     #init home, reset, step and follow services
+    start_srv = rospy.Service("start", Empty, start_callback)
     home_srv = rospy.Service("home", home, home_callback)
     go2pose_srv = rospy.Service("go2pose", go2pose, go2pose_callback)
     followme_srv = rospy.Service("followme", go2pose, followme_callback)
+    grip_srv = rospy.Service("grip", grip, grip_callback)
+
+  
 
     #iteration loop
     while not rospy.is_shutdown():
