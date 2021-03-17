@@ -15,7 +15,7 @@
   ```
     or use script
     ```
-    ./connect_baxter.sh
+    source connect_baxter.sh
     ```
 - Check if `Joint_states` are published by the robot
   ```
@@ -36,12 +36,14 @@
     ```
 - Launch RViz interface and trajectory node
   ```
-  roslaunch baxter_control basic.launch run_trajectory_node:=true 
+  roslaunch baxter_control basic.launch left_electric_gripper:=true right_electric_gripper:=true run_trajectory_node:=true 
   ```
+  Debug:
   ```
-  roslaunch baxter_control basic.launch use_joint_joystick:=true left_electric_gripper:=true
+  roslaunch baxter_control basic.launch use_joint_joystick:=true left_electric_gripper:=true right_electric_gripper:=true
+  rosrun baxter_control trajectory
   ```
-  *joint_trajectory_action_server.py` is included in the launch file*
+  *`joint_trajectory_action_server.py` is included in the launch file*
 
 - Disable the robot
   ```
@@ -64,6 +66,56 @@ Args | Default | Description
 `gui:=true`|`false`| Run Gazebo with GUI
 `left_electric_gripper:=true`|`true`| Use baxter with left gripper enabled
 `right_electric_gripper:=true` |`true`|Use baxter with right gripper enabled
+`use_gripper_joystick` | `false` | Control and callibrate left and right gripper using controller
+`use_joint_joystick` | `false` | Control arm joints as well as gripper using controller
+`joystick` | `xbox` | set controller (xbox | Logitech | PS4)
+`dev` | `/dev/input/js0` | path to controller
+
+# Services available
+- home: move left and right arm to predefined `left_neutral` and `right_neutral` position respectively
+  ```
+  rosservice call /home "reset: true" 
+  ```
+- start: initialize all services and calibrates left and right grripper
+  ```
+  rosservice call /start  
+  ```
+- left_go2pose: 
+  ```
+  rosservice call /left_go2pose "goal_position:                          
+    x: 0.0
+    y: 0.0
+    z: 0.0
+  goal_orientation:
+    x: 0.0
+    y: 0.0
+    z: 0.0
+    w: 0.0" 
+  ```
+- right_go2pose:
+  ```
+  rosservice call /right_go2pose "goal_position:                     
+    x: 0.0
+    y: 0.0
+    z: 0.0
+  goal_orientation:
+    x: 0.0
+    y: 0.0
+    z: 0.0
+    w: 0.0" 
+  ```
+- left_grip: close left gripper using input `state: 1` and open using `state: 0`
+  ```
+  rosservice call /left_grip "state: false" 
+  ```
+- right_grip: close right gripper using input `state: 1` and open using `state: 0`
+  ```
+  rosservice call /right_grip "state: false"   
+  ```
+- followme: 
+  ```
+  rosservice call /followme "arm: 'left'"
+  ```
 ---
 
 ## *Dependencies*
@@ -73,10 +125,10 @@ RethinkRobotics| [Github](https://github.com/RethinkRobotics)
 moveit_robots | [Github](https://github.com/ros-planning/moveit_robots)
 ---
 
-## Baxter Home Positions:
+## *Baxter Home Positions:*
 
-Left Gripper
-
+*Left Gripper*
+```
 position: 
   x: 0.6494685697319907
   y: 0.8371804136224866
@@ -86,9 +138,10 @@ orientation:
   y: 0.9235212614290408
   z: 0.020782280350508237
   w: 0.0461614930979309
+```
 
-Right Gripper
-
+*Right Gripper*
+```
 position: 
   x: 0.6544330865980147
   y: -0.841170466336113
@@ -98,7 +151,7 @@ orientation:
   y: 0.9229889441554372
   z: -0.023015433956129042
   w: 0.05299189755112533
-
+```
 ## RQT Graph
 
 ![rqt](rosgraph.svg)

@@ -43,8 +43,8 @@
         <!-- all vars that included.launch requires must be set -->
         <arg name="headless" value="$(arg headless)" />
         <arg name="gui" value="$(arg gui)" />
-        <!--<arg name="left_electric_gripper" value="$(arg left_electric_gripper)" />
-        <arg name="right_electric_gripper" value="$(arg right_electric_gripper)" />-->
+        <arg name="left_electric_gripper" value="$(arg left_electric_gripper)" />
+        <arg name="right_electric_gripper" value="$(arg right_electric_gripper)" />
         <remap from="joint_states" to="robot/joint_states"/>
     </include>
     
@@ -67,12 +67,13 @@
     
   <!--<node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
   </node>-->
+
   <group if="$(arg run_trajectory_node)">
     
     <node name="trajectory" pkg="baxter_control" type="trajectory" output="screen">
-    
       <!--private params-->
     </node>
+
   </group>
   
 </launch>
