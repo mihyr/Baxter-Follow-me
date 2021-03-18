@@ -18,7 +18,7 @@ import sys
 import moveit_commander
 from geometry_msgs.msg import Quaternion, Vector3, PoseStamped, Pose
 from moveit_msgs.msg import MoveItErrorCodes
-from baxter_control.srv import home, left_go2pose, right_go2pose, followme, left_grip, right_grip
+from baxter_control.srv import home, left_go2pose, right_go2pose, followme, left_grip, right_grip, followmeRequest, followmeResponse, left_go2poseRequest, left_go2poseResponse
 import baxter_interface
 from baxter_interface import Gripper, CHECK_VERSION
 from std_srvs.srv import Empty, EmptyResponse
@@ -71,13 +71,14 @@ def main():
     print(right_current_pose)
     
     #Set moveit params
-    left_arm_moveit.set_goal_position_tolerance(0.005)
-    left_arm_moveit.set_goal_orientation_tolerance(0.01)
-    left_arm_moveit.set_planning_time(5.0)
+    left_arm_moveit.set_goal_position_tolerance(0.05)
+    left_arm_moveit.set_goal_orientation_tolerance(0.1)
+    left_arm_moveit.set_planning_time(1.0)
+    #left_arm_moveit.compute_cartesian_path()
 
     #left_arm_moveit.set_num_planning_attempts(10)
     left_arm_moveit.allow_replanning(True)
-    left_arm_moveit.set_max_velocity_scaling_factor(0.3)
+    left_arm_moveit.set_max_velocity_scaling_factor(0.4)
     left_arm_moveit.set_max_acceleration_scaling_factor(0.2)
 
     right_arm_moveit.set_goal_position_tolerance(0.005)
@@ -85,7 +86,7 @@ def main():
     right_arm_moveit.set_planning_time(5.0)
     #right_arm_moveit.set_num_planning_attempts(10)
     right_arm_moveit.allow_replanning(True)
-    right_arm_moveit.set_max_velocity_scaling_factor(0.3)
+    right_arm_moveit.set_max_velocity_scaling_factor(0.4)
     right_arm_moveit.set_max_acceleration_scaling_factor(0.2)
 
     left_gripper = Gripper('left', CHECK_VERSION)
@@ -94,6 +95,7 @@ def main():
     #Define home_callback service
     def home_callback(msg):
         #reset both arms
+        '''
         left_arm_moveit.set_named_target('left_neutral')
         right_arm_moveit.set_named_target('right_neutral')
         left_arm_moveit.go()
@@ -102,7 +104,9 @@ def main():
         right_arm_moveit.stop()
         left_arm_moveit.clear_pose_targets()
         right_arm_moveit.clear_pose_targets()
-        return {'response': "Home Position Set"}
+        '''
+        left_current_pose = left_arm_moveit.get_current_pose(end_effector_link='left_gripper').pose
+        return {'response': str(left_current_pose)}
 
 
     #Define left_go2pose_callback service
@@ -167,26 +171,46 @@ def main():
         y_waypoints = rospy.get_param("/y_waypoints")
         z_waypoints = rospy.get_param("/z_waypoints")
 
-        waypoints = []
+        #get current pose of robot
+        left_current_pose = left_arm_moveit.get_current_pose(end_effector_link='left_gripper').pose
 
+        #waypoints = []
+        
+        #wait until step service is available
+        rospy.wait_for_service('left_go2pose')
+        left_go2pose_service = rospy.ServiceProxy('left_go2pose', left_go2pose)
+
+        #for loop for iterating among elements in waypoints array
+        for i in range(len(x_waypoints)):
+            left_go2pose_input = left_go2poseRequest()
+            left_go2pose_input.goal_position = Vector3(x_waypoints[i],y_waypoints[i],z_waypoints[i])
+            #Step_input.Gripper_state = gripper_state[i]
+            #left_go2pose_input.goal_orientation = left_current_pose.orientation #Quaternion(-0.3801916530737042,0.9235212614290408, 0.020782280350508237, 0.0461614930979309)
+
+            rospy.logerr(left_go2pose_input)
+            left_go2pose_service(left_go2pose_input)
+        
+        '''
         for i in range(len(x_waypoints)):
             pose = Pose()
             pose.position = Vector3(x_waypoints[i], y_waypoints[i], z_waypoints[i])
-            pose.orientation = Quaternion(0,0,0,1)
+            #pose.orientation = left_current_pose.orientation
+            pose.orientation = Quaternion(-0.3801916530737042,0.9235212614290408, 0.020782280350508237, 0.0461614930979309)
             waypoints.append(pose)
+        rospy.logerr(waypoints)
+        (plan, fraction) = left_arm_moveit.compute_cartesian_path(waypoints, 0.01, 0, avoid_collisions=True)           
         
-        (plan, fraction) = right_arm_moveit.compute_cartesian_path(waypoints, 0.01, 0.0)           
-
-        right_arm_moveit.execute(plan, wait=True)
-        #right_arm_moveit.go()
-        right_arm_moveit.stop()
-        right_arm_moveit.clear_pose_targets()
+        left_arm_moveit.execute(plan, wait=True)
+        #left_arm_moveit.go()
+        left_arm_moveit.stop()
+        left_arm_moveit.clear_pose_targets()
+        '''
         return {'response': "Done"}
 
     #Define start_callback service
     def start_callback(msg):
         #Start execution
-
+        
         # Reboot Gripper
         right_gripper.reboot()
         # Calibrate Gripper
