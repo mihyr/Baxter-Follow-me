@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from collections import deque
 from imutils.video import VideoStream
 import pyrealsense2 as rs
@@ -9,6 +9,7 @@ import time
 import imutils
 import rospy 
 from geometry_msgs.msg import Point
+
 
 rospy.init_node('tracking')
 pub= rospy.Publisher('world_coord',Point, queue_size = 50)
@@ -118,5 +119,7 @@ while True:
 
     if cv2.waitKey(25) == ord('q'):
         break
+
+
 pipeline.stop()
 cv2.destroyAllWindows()
