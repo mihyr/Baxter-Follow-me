@@ -1,8 +1,8 @@
   #Note: This parameters are meant for trajectory node
 Fr  : 200   #frequency
-x_waypoints : [0.8, 0.9, 0.9, 1] #x coordinates for end effector
-y_waypoints : [0.6, 0.62, -0.20, -0.2]  #y coordinates for end effector
-z_waypoints : [-0.06, 0.13, 0.03, -0.10] #z coordinates for end effector
+x_waypoints : [0, 0, 0, 0] #x coordinates for end effector
+y_waypoints : [-0.2, 0.2, -0.50, 0.2]  #y coordinates for end effector
+z_waypoints : [-0.18, 0.2, -0.18, 0.2] #z coordinates for end effector
 time : [] #corresponding time for coordinates of end effector
 
 

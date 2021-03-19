@@ -71,6 +71,8 @@ Args | Default | Description
 `joystick` | `xbox` | set controller (xbox | Logitech | PS4)
 `dev` | `/dev/input/js0` | path to controller
 
+# Workflow
+![rqt](Blankdiagram.png)
 # Services available
 - home: move left and right arm to predefined `left_neutral` and `right_neutral` position respectively
   ```

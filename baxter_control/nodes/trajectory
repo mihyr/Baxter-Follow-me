@@ -71,15 +71,15 @@ def main():
     print(right_current_pose)
     
     #Set moveit params
-    left_arm_moveit.set_goal_position_tolerance(0.05)
-    left_arm_moveit.set_goal_orientation_tolerance(0.1)
-    left_arm_moveit.set_planning_time(1.0)
+    left_arm_moveit.set_goal_position_tolerance(0.005)
+    left_arm_moveit.set_goal_orientation_tolerance(0.01)
+    left_arm_moveit.set_planning_time(5.0)
     #left_arm_moveit.compute_cartesian_path()
 
     #left_arm_moveit.set_num_planning_attempts(10)
     left_arm_moveit.allow_replanning(True)
-    left_arm_moveit.set_max_velocity_scaling_factor(0.4)
-    left_arm_moveit.set_max_acceleration_scaling_factor(0.2)
+    left_arm_moveit.set_max_velocity_scaling_factor(0.1)
+    left_arm_moveit.set_max_acceleration_scaling_factor(0.1)
 
     right_arm_moveit.set_goal_position_tolerance(0.005)
     right_arm_moveit.set_goal_orientation_tolerance(0.01)
@@ -185,7 +185,7 @@ def main():
             left_go2pose_input = left_go2poseRequest()
             left_go2pose_input.goal_position = Vector3(x_waypoints[i],y_waypoints[i],z_waypoints[i])
             #Step_input.Gripper_state = gripper_state[i]
-            #left_go2pose_input.goal_orientation = left_current_pose.orientation #Quaternion(-0.3801916530737042,0.9235212614290408, 0.020782280350508237, 0.0461614930979309)
+            left_go2pose_input.goal_orientation = left_current_pose.orientation#Quaternion(-0.3801916530737042,0.9235212614290408, 0.020782280350508237, 0.0461614930979309)
 
             rospy.logerr(left_go2pose_input)
             left_go2pose_service(left_go2pose_input)
@@ -199,12 +199,11 @@ def main():
             waypoints.append(pose)
         rospy.logerr(waypoints)
         (plan, fraction) = left_arm_moveit.compute_cartesian_path(waypoints, 0.01, 0, avoid_collisions=True)           
-        
+        '''
         left_arm_moveit.execute(plan, wait=True)
         #left_arm_moveit.go()
         left_arm_moveit.stop()
         left_arm_moveit.clear_pose_targets()
-        '''
         return {'response': "Done"}
 
     #Define start_callback service
