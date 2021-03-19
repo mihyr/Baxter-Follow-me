@@ -64,6 +64,7 @@ add_service_files(
   followme.srv
   left_grip.srv
   right_grip.srv
+  start.srv
 #   Service2.srv
 )
 

@@ -18,7 +18,7 @@ import sys
 import moveit_commander
 from geometry_msgs.msg import Quaternion, Vector3, PoseStamped, Pose
 from moveit_msgs.msg import MoveItErrorCodes
-from baxter_control.srv import home, left_go2pose, right_go2pose, followme, left_grip, right_grip, followmeRequest, followmeResponse, left_go2poseRequest, left_go2poseResponse
+from baxter_control.srv import home, left_go2pose, right_go2pose, followme, left_grip, right_grip, followmeRequest, followmeResponse, left_go2poseRequest, left_go2poseResponse, homeRequest, homeResponse
 import baxter_interface
 from baxter_interface import Gripper, CHECK_VERSION
 from std_srvs.srv import Empty, EmptyResponse
@@ -27,6 +27,12 @@ from std_srvs.srv import Empty, EmptyResponse
 #Import params from waypoints.yaml
 #freq = rospy.get_param("/Fr") #Define frequency rate
 freq = 200
+left_grip_trigger = False
+right_grip_trigger = False
+left_waypoint_trigger = False
+right_waypoint_trigger = False
+home_trigger = False
+
 
 def main():
         
@@ -95,7 +101,7 @@ def main():
     #Define home_callback service
     def home_callback(msg):
         #reset both arms
-        '''
+        
         left_arm_moveit.set_named_target('left_neutral')
         right_arm_moveit.set_named_target('right_neutral')
         left_arm_moveit.go()
@@ -104,7 +110,7 @@ def main():
         right_arm_moveit.stop()
         left_arm_moveit.clear_pose_targets()
         right_arm_moveit.clear_pose_targets()
-        '''
+        
         left_current_pose = left_arm_moveit.get_current_pose(end_effector_link='left_gripper').pose
         return {'response': str(left_current_pose)}
 
@@ -133,8 +139,15 @@ def main():
         left_arm_moveit.stop()
         left_arm_moveit.clear_pose_targets()
         left_new_pose = left_arm_moveit.get_current_pose(end_effector_link='left_gripper').pose
+        
+        rospy.sleep(0.1)
 
-        return {'response': "Done", 'new_pose': left_new_pose}
+        if msg.grip == True:
+
+            left_grip_trigger = True
+            return {'response': "Done with grip", 'new_pose': left_new_pose}
+        else:
+            return {'response': "Done without grip", 'new_pose': left_new_pose}
 
     #Define right_go2pose_callback service
     def right_go2pose_callback(msg):
@@ -161,69 +174,127 @@ def main():
         right_arm_moveit.clear_pose_targets()
         right_new_pose = right_arm_moveit.get_current_pose(end_effector_link='right_gripper').pose
 
-        return {'response': "Done", 'new_pose': right_new_pose}
+        rospy.sleep(0.1)
+
+        if msg.grip == True:
+            right_grip_trigger = True
+            return {'response': "Done with grip", 'new_pose': right_new_pose}
+        else:
+            return {'response': "Done without grip", 'new_pose': right_new_pose}
 
 
     #Define followme_callback service
     def followme_callback(msg):
-        #get params
-        x_waypoints = rospy.get_param("/x_waypoints")
-        y_waypoints = rospy.get_param("/y_waypoints")
-        z_waypoints = rospy.get_param("/z_waypoints")
+        if msg.arm == "left":
+            #get params
+            x_waypoints = rospy.get_param("/x_waypoints")
+            y_waypoints = rospy.get_param("/y_waypoints")
+            z_waypoints = rospy.get_param("/z_waypoints")
 
-        #get current pose of robot
-        left_current_pose = left_arm_moveit.get_current_pose(end_effector_link='left_gripper').pose
+            #get current pose of robot
+            left_current_pose = left_arm_moveit.get_current_pose(end_effector_link='left_gripper').pose
+            
+            #wait until step service is available
+            rospy.wait_for_service('left_go2pose')
+            left_go2pose_service = rospy.ServiceProxy('left_go2pose', left_go2pose)
 
-        #waypoints = []
+            #for loop for iterating among elements in waypoints array
+            for i in range(len(x_waypoints)):
+                left_go2pose_input = left_go2poseRequest()
+                left_go2pose_input.goal_position = Vector3(x_waypoints[i],y_waypoints[i],z_waypoints[i])
+                #Step_input.Gripper_state = gripper_state[i]
+                left_go2pose_input.goal_orientation = left_current_pose.orientation#Quaternion(-0.3801916530737042,0.9235212614290408, 0.020782280350508237, 0.0461614930979309)
+
+                rospy.logerr(left_go2pose_input)
+                left_go2pose_service(left_go2pose_input)
+                #cartesian execution
+            '''
+            #waypoints = []
+            for i in range(len(x_waypoints)):
+                pose = Pose()
+                pose.position = Vector3(x_waypoints[i], y_waypoints[i], z_waypoints[i])
+                #pose.orientation = left_current_pose.orientation
+                pose.orientation = Quaternion(-0.3801916530737042,0.9235212614290408, 0.020782280350508237, 0.0461614930979309)
+                waypoints.append(pose)
+            rospy.logerr(waypoints)
+            (plan, fraction) = left_arm_moveit.compute_cartesian_path(waypoints, 0.01, 0, avoid_collisions=True)           
+            '''
+            left_arm_moveit.execute(plan, wait=True)
+            #left_arm_moveit.go()
+            left_arm_moveit.stop()
+            left_arm_moveit.clear_pose_targets()
+            return {'response': "Done"}
+
         
-        #wait until step service is available
-        rospy.wait_for_service('left_go2pose')
-        left_go2pose_service = rospy.ServiceProxy('left_go2pose', left_go2pose)
+        elif msg.arm == "Right":
+            #get params
+            x_waypoints = rospy.get_param("/x_waypoints")
+            y_waypoints = rospy.get_param("/y_waypoints")
+            z_waypoints = rospy.get_param("/z_waypoints")
 
-        #for loop for iterating among elements in waypoints array
-        for i in range(len(x_waypoints)):
-            left_go2pose_input = left_go2poseRequest()
-            left_go2pose_input.goal_position = Vector3(x_waypoints[i],y_waypoints[i],z_waypoints[i])
-            #Step_input.Gripper_state = gripper_state[i]
-            left_go2pose_input.goal_orientation = left_current_pose.orientation#Quaternion(-0.3801916530737042,0.9235212614290408, 0.020782280350508237, 0.0461614930979309)
+            #get current pose of robot
+            left_current_pose = left_arm_moveit.get_current_pose(end_effector_link='left_gripper').pose
 
-            rospy.logerr(left_go2pose_input)
-            left_go2pose_service(left_go2pose_input)
+            #wait until step service is available
+            rospy.wait_for_service('left_go2pose')
+            left_go2pose_service = rospy.ServiceProxy('left_go2pose', left_go2pose)
+
+            #for loop for iterating among elements in waypoints array
+            for i in range(len(x_waypoints)):
+                left_go2pose_input = left_go2poseRequest()
+                left_go2pose_input.goal_position = Vector3(x_waypoints[i],y_waypoints[i],z_waypoints[i])
+                #Step_input.Gripper_state = gripper_state[i]
+                left_go2pose_input.goal_orientation = left_current_pose.orientation#Quaternion(-0.3801916530737042,0.9235212614290408, 0.020782280350508237, 0.0461614930979309)
+
+                rospy.logerr(left_go2pose_input)
+                left_go2pose_service(left_go2pose_input)
         
-        '''
-        for i in range(len(x_waypoints)):
-            pose = Pose()
-            pose.position = Vector3(x_waypoints[i], y_waypoints[i], z_waypoints[i])
-            #pose.orientation = left_current_pose.orientation
-            pose.orientation = Quaternion(-0.3801916530737042,0.9235212614290408, 0.020782280350508237, 0.0461614930979309)
-            waypoints.append(pose)
-        rospy.logerr(waypoints)
-        (plan, fraction) = left_arm_moveit.compute_cartesian_path(waypoints, 0.01, 0, avoid_collisions=True)           
-        '''
-        left_arm_moveit.execute(plan, wait=True)
-        #left_arm_moveit.go()
-        left_arm_moveit.stop()
-        left_arm_moveit.clear_pose_targets()
-        return {'response': "Done"}
+            #cartesian execution
+            '''
+            #waypoints = []
+            for i in range(len(x_waypoints)):
+                pose = Pose()
+                pose.position = Vector3(x_waypoints[i], y_waypoints[i], z_waypoints[i])
+                #pose.orientation = left_current_pose.orientation
+                pose.orientation = Quaternion(-0.3801916530737042,0.9235212614290408, 0.020782280350508237, 0.0461614930979309)
+                waypoints.append(pose)
+            rospy.logerr(waypoints)
+            (plan, fraction) = left_arm_moveit.compute_cartesian_path(waypoints, 0.01, 0, avoid_collisions=True)           
+            '''
+            left_arm_moveit.execute(plan, wait=True)
+            #left_arm_moveit.go()
+            left_arm_moveit.stop()
+            left_arm_moveit.clear_pose_targets()
+            return {'response': "Done"}
+        
+        else:
+            return {'response': "Select left or right arm in 'arm:' input"}
 
     #Define start_callback service
     def start_callback(msg):
         #Start execution
-        
-        # Reboot Gripper
-        right_gripper.reboot()
-        # Calibrate Gripper
-        right_gripper.calibrate()
-        # Open Gripper
-        right_gripper.open()
+        if msg.reset == True:
+            #enable robot
+            baxter_interface.RobotEnable().enable()
+            # Reboot Gripper
+            right_gripper.reboot()
+            # Calibrate Gripper
+            right_gripper.calibrate()
+            # Open Gripper
+            right_gripper.open()
 
-        # Reboot Gripper
-        left_gripper.reboot()
-        # Calibrate Gripper
-        left_gripper.calibrate()
-        # Open Gripper
-        left_gripper.open()
-        
+            # Reboot Gripper
+            left_gripper.reboot()
+            # Calibrate Gripper
+            left_gripper.calibrate()
+            # Open Gripper
+            left_gripper.open()
+            home_trigger = True
+
+        if msg.arm == "left":
+            left_waypoint_trigger = True
+        elif msg.arm == "right":
+            right_waypoint_trigger = True
         return EmptyResponse()
 
     #Define left_grip_callback service
@@ -254,11 +325,63 @@ def main():
     followme_srv = rospy.Service("followme", followme, followme_callback)
     left_grip_srv = rospy.Service("left_grip", left_grip, left_grip_callback)
     right_grip_srv = rospy.Service("right_grip", right_grip, right_grip_callback)
+
     #iteration loop
     while not rospy.is_shutdown():
 
         #check
         #rospy.loginfo("check")
+        if left_grip_trigger == True:
+            #wait until left_grip service is available
+            rospy.wait_for_service('left_grip')
+            left_grip_service = rospy.ServiceProxy('left_grip', left_grip)
+            left_grip_ip = left_gripRequest()
+            left_grip_ip.state = 0 #close gripper
+            left_grip_service(left_grip_ip)
+            right_grip_trigger = False
+            rospy.sleep(0.5)
+           
+        if right_grip_trigger == True:
+            #wait until left_grip service is available
+            rospy.wait_for_service('right_grip')
+            right_grip_service = rospy.ServiceProxy('right_grip', right_grip)
+            right_grip_ip = left_gripRequest()
+            right_grip_ip.state = 0 #close gripper
+            right_grip_service(right_grip_ip)
+            right_grip_trigger = False
+            rospy.sleep(0.5)
+            
+        if left_waypoint_trigger ==True:
+            #wait until left_go2pose service is available
+            rospy.wait_for_service('left_go2pose')
+            left_go2pose_service = rospy.ServiceProxy('left_go2pose', left_go2pose)
+            left_go2pose_ip = left_go2poseRequest()
+            left_go2pose_ip.goal_position = Vector3(0.83,0.49,-0.13)
+            left_go2pose_service(left_go2pose_ip)
+
+        if right_waypoint_trigger ==True: 
+            left_go2pose_ip = left_go2poseRequest()
+            left_go2pose_ip.goal_position = Vector3(0.83,0.49,-0.13)
+            left_go2pose_service(left_go2pose_ip)
+            #wait until right_go2pose service is available
+            rospy.wait_for_service('right_go2pose')
+            right_go2pose_service = rospy.ServiceProxy('right_go2pose', right_go2pose)
+
+        if home_trigger == True:
+            rospy.wait_for_service('home')
+            home_service = rospy.ServiceProxy('home', home)
+            home_ip = homeRequest()
+            home_ip.reset = True
+            home_service(home_ip)
+            rospy.sleep(0.5)
+
+        if followme_trigger ==True:
+            #wait until followme service is available
+            rospy.wait_for_service('followme')
+            followme_service = rospy.ServiceProxy('followme', followme)
+            followme_ip = followmeRequest()
+            followme_ip.arm = "left"
+            followme_service(followme_ip)
         
         #go to sleep!
         hz.sleep()
