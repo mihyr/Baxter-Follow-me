@@ -78,11 +78,20 @@ Args | Default | Description
   ```
   rosservice call /home "reset: true" 
   ```
-- start: initialize all services and calibrates left and right grripper
+- start: To initialize all services and calibrates left and right gripper
   ```
-  rosservice call /start  
+  rosservice call /start "reset: true" arm:"none"
   ```
-- left_go2pose: 
+  To initialize __followme__ sequence as shown in the flowchart above
+  ```
+  rosservice call /start "reset: false" arm:"left"
+  ```
+  you may reset as well as initialize sequence, both together as well! but in this case ypu wont go to `home` position, you will go to first waypoint instead (assuming waypoints are already loaded in rosparam server).
+   ```
+  rosservice call /start "true: false" arm:"left"
+  ```
+
+- left_go2pose: if `grip` is set `True` this servive calls `left_grip` service after its execution is __successful__
   ```
   rosservice call /left_go2pose "goal_position:                          
     x: 0.0
@@ -92,9 +101,10 @@ Args | Default | Description
     x: 0.0
     y: 0.0
     z: 0.0
-    w: 0.0" 
+    w: 0.0
+  grip: false" 
   ```
-- right_go2pose:
+- right_go2pose: if `grip` is set `True` this servive calls `right_grip` service after its execution is __successful__
   ```
   rosservice call /right_go2pose "goal_position:                     
     x: 0.0
@@ -104,7 +114,8 @@ Args | Default | Description
     x: 0.0
     y: 0.0
     z: 0.0
-    w: 0.0" 
+    w: 0.0
+  grip: false"  
   ```
 - left_grip: close left gripper using input `state: 1` and open using `state: 0`
   ```
@@ -114,7 +125,7 @@ Args | Default | Description
   ```
   rosservice call /right_grip "state: false"   
   ```
-- followme: 
+- followme: Specify the `arm` which should follow *waypoints* trajectory
   ```
   rosservice call /followme "arm: 'left'"
   ```
