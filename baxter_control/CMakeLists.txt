@@ -58,11 +58,11 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate services in the 'srv' folder
 add_service_files(
   FILES
+  followme.srv
   home.srv
   left_go2pose.srv
-  right_go2pose.srv
-  followme.srv
   left_grip.srv
+  right_go2pose.srv
   right_grip.srv
   start.srv
 #   Service2.srv
