@@ -24,12 +24,12 @@ from baxter_interface import Gripper, CHECK_VERSION
 from std_srvs.srv import Empty, EmptyResponse
 
 
-freq = 200
+freq = 10
 
 def main():
     #initialize node
     rospy.init_node('execution')
-
+    hz = rospy.Rate(freq)
     #wait until left_go2pose service is available
     rospy.wait_for_service('left_go2pose')
     left_go2pose_service = rospy.ServiceProxy('left_go2pose', left_go2pose)
@@ -60,9 +60,36 @@ def main():
     #left_go2pose_ip.goal_orientation = Quaternion(-0.022429013046662886,0.9997259081777473,0.0020754945605366004,0.006382806143092541)
     left_go2pose_service(left_go2pose_ip)
 
+    rospy.sleep(1)
     left_grip_ip = left_gripRequest()
     left_grip_ip.state = 0 #close gripper
     left_grip_service(left_grip_ip)
+    rospy.sleep(1)
+    #intermediate
+    
+    left_go2pose_ip = left_go2poseRequest()
+    left_go2pose_ip.goal_position = Vector3(0.76,0.49,0.1)
+    #left_go2pose_ip.goal_orientation = Quaternion(-0.022429013046662886,0.9997259081777473,0.0020754945605366004,0.006382806143092541)
+    left_go2pose_service(left_go2pose_ip)
+    rospy.sleep(1)
+    #go to goal
+    left_go2pose_ip = left_go2poseRequest()
+    left_go2pose_ip.goal_position = Vector3(0.73,-0.06,-0.13)
+    #left_go2pose_ip.goal_orientation = Quaternion(-0.022429013046662886,0.9997259081777473,0.0020754945605366004,0.006382806143092541)
+    left_go2pose_service(left_go2pose_ip)
+    rospy.sleep(1)
+    #release
+    left_grip_ip = left_gripRequest()
+    left_grip_ip.state = 1 #close gripper
+    left_grip_service(left_grip_ip)
+
+    rospy.sleep(1)
+    left_go2pose_ip = left_go2poseRequest()
+    left_go2pose_ip.goal_position = Vector3(0.76,0.49,0.1)
+    #left_go2pose_ip.goal_orientation = Quaternion(-0.022429013046662886,0.9997259081777473,0.0020754945605366004,0.006382806143092541)
+    left_go2pose_service(left_go2pose_ip)
+
+    
     #define ros frequency
     hz = rospy.Rate(freq)
     #iteration loop

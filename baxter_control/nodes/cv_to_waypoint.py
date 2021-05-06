@@ -47,6 +47,9 @@ else:
 x=0
 y=0
 z=0
+x_waypoints = []
+y_waypoints = []
+z_waypoints = []
 
 while True:
     frames = pipeline.wait_for_frames()
@@ -84,10 +87,7 @@ while True:
     pts.append(center)
 
     p=Point()
-    x_waypoints = []
-    y_waypoints = []
-    z_waypoints = []
-
+   
     for i in range(1, len(pts)):
         if pts[i-1] is None or pts[i] is None:
             continue
