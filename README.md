@@ -72,7 +72,7 @@ Args | Default | Description
 `dev` | `/dev/input/js0` | path to controller
 
 # Workflow
-![rqt](Blankdiagram.png)
+![rqt](baxter_control/Blankdiagram.png)
 # Services available
 - home: move left and right arm to predefined `left_neutral` and `right_neutral` position respectively
   ```
@@ -167,4 +167,4 @@ orientation:
 ```
 ## RQT Graph
 
-![rqt](rosgraph.svg)
+![rqt](baxter_control/rosgraph.svg)
