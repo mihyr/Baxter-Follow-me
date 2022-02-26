@@ -1,4 +1,9 @@
-# __Steps to Launch on Actual Robot__
+# Baxter Control Package for Mimicking Human Actions
+
+# Workflow
+![rqt](baxter_control/Blankdiagram.png)
+
+##  __Steps to Launch on Actual Robot__
 - Connect to Rethink
   ```
   nmcli connection up Rethink
@@ -71,8 +76,6 @@ Args | Default | Description
 `joystick` | `xbox` | set controller (xbox | Logitech | PS4)
 `dev` | `/dev/input/js0` | path to controller
 
-# Workflow
-![rqt](baxter_control/Blankdiagram.png)
 # Services available
 - home: move left and right arm to predefined `left_neutral` and `right_neutral` position respectively
   ```
