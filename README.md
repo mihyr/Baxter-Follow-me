@@ -1,5 +1,7 @@
 # Baxter Control Package for Mimicking Human Actions
 
+![](https://media.giphy.com/media/gusA7juHoTFYPS99kY/giphy.gif)
+
 # Workflow
 ![rqt](baxter_control/Blankdiagram.png)
 
